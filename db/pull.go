@@ -1,16 +1,15 @@
 package db
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"time"
 
 	"roci.dev/diff-server/kv"
 	servetypes "roci.dev/diff-server/serve/types"
+	"roci.dev/replicache-client/http"
 
 	"github.com/attic-labs/noms/go/types"
 	"github.com/attic-labs/noms/go/util/verbose"
@@ -33,16 +32,14 @@ type puller interface {
 }
 
 type defaultPuller struct {
-	c *http.Client
+	t time.Duration
 }
 
-func (d *defaultPuller) client() *http.Client {
-	if d.c == nil {
-		d.c = &http.Client{
-			Timeout: 20 * time.Second, // Enough time to download 4MB on a slow connection.
-		}
+func (d *defaultPuller) timeout() time.Duration {
+	if d.t == 0 {
+		d.t = 20 * time.Second // Enough time to download 4MB on a slow connection.
 	}
-	return d.c
+	return d.t
 }
 
 // Pull pulls new server state from the client view via the diffserver.
@@ -59,12 +56,7 @@ func (d *defaultPuller) Pull(noms types.ValueReadWriter, baseState Commit, url s
 	}
 	verbose.Log("Pulling: %s from baseStateID %s with auth %s", url, baseState.Meta.Snapshot.ServerStateID, clientViewAuth)
 
-	req, err := http.NewRequest("POST", url, bytes.NewReader(pullReq))
-	if err != nil {
-		return Commit{}, servetypes.ClientViewInfo{}, err
-	}
-	req.Header.Add("Authorization", diffServerAuth)
-	resp, err := d.client().Do(req)
+	resp, err := http.Post(url, pullReq, d.timeout(), diffServerAuth)
 	if err != nil {
 		return Commit{}, servetypes.ClientViewInfo{}, err
 	}

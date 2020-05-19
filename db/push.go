@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"time"
 
 	nomsjson "roci.dev/diff-server/util/noms/json"
+
+	"roci.dev/replicache-client/http"
 )
 
 type BatchPushRequest struct {
@@ -50,16 +51,14 @@ type pusher interface {
 }
 
 type defaultPusher struct {
-	c *http.Client
+	t time.Duration
 }
 
-func (d *defaultPusher) client() *http.Client {
-	if d.c == nil {
-		d.c = &http.Client{
-			Timeout: 20 * time.Second, // Enough time to upload 4MB on a slow connection.
-		}
+func (d *defaultPusher) timeout() time.Duration {
+	if d.t == 0 {
+		d.t = 20 * time.Second // Enough time to upload 4MB on a slow connection.
 	}
-	return d.c
+	return d.t
 }
 
 // Push sends pending local commits to the batch endpoint. If the request was made
@@ -87,12 +86,7 @@ func (d *defaultPusher) Push(pending []Local, url string, dataLayerAuth string, 
 		return withErrMsg(err.Error())
 	}
 
-	httpReq, err := http.NewRequest("POST", url, bytes.NewReader(reqBody))
-	if err != nil {
-		return withErrMsg(err.Error())
-	}
-	httpReq.Header.Add("Authorization", dataLayerAuth)
-	httpResp, err := d.client().Do(httpReq)
+	httpResp, err := http.Post(url, reqBody, d.timeout(), dataLayerAuth)
 	if err != nil {
 		return withErrMsg(err.Error())
 	}

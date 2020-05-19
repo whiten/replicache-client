@@ -24,7 +24,8 @@ func TestDB_BeginSync(t *testing.T) {
 	dataLayerAuth := "dataLayerAuthToken"
 
 	// Get the sync snapshot we expect in the success case and then throw away its db.
-	db, _ := LoadTempDB(assert)
+	db, _, err := LoadTempDB()
+	assert.Nil(err)
 	m := kv.NewMap(db.noms)
 	var commits testCommits
 	commits.addGenesis(assert, db).addSnapshot(assert, db).addLocal(assert, db, d)
@@ -121,7 +122,8 @@ func TestDB_BeginSync(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert = assertpkg.New(t)
-			db, dir := LoadTempDB(assert)
+			db, dir, err := LoadTempDB()
+			assert.Nil(err)
 			fmt.Println("dir", dir)
 
 			var commits testCommits
@@ -288,7 +290,8 @@ func TestDB_MaybeEndSync(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db, _ := LoadTempDB(assert)
+			db, _, err := LoadTempDB()
+			assert.Nil(err)
 			var master testCommits
 			master = append(master, db.Head())
 			for i := 0; i < tt.numPending; i++ {
@@ -348,7 +351,8 @@ func TestDB_MaybeEndSync(t *testing.T) {
 func TestPendingCommits(t *testing.T) {
 	assert := assert.New(t)
 
-	db, _ := LoadTempDB(assert)
+	db, _, err := LoadTempDB()
+	assert.Nil(err)
 	commits := &testCommits{}
 
 	f := func(head Commit, wantCommits []Commit, wantErr error) {

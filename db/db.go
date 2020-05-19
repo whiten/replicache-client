@@ -11,7 +11,7 @@ import (
 	"github.com/attic-labs/noms/go/datas"
 	"github.com/attic-labs/noms/go/hash"
 	"github.com/attic-labs/noms/go/marshal"
-	"github.com/attic-labs/noms/go/spec"
+	"github.com/attic-labs/noms/go/spec/lite"
 	"github.com/attic-labs/noms/go/types"
 
 	"roci.dev/diff-server/kv"

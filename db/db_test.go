@@ -2,11 +2,9 @@ package db
 
 import (
 	"errors"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/attic-labs/noms/go/spec"
+	"github.com/attic-labs/noms/go/spec/lite"
 	"github.com/attic-labs/noms/go/util/datetime"
 	"github.com/stretchr/testify/assert"
 	"roci.dev/diff-server/kv"
@@ -15,7 +13,8 @@ import (
 
 func TestGetSetHead(t *testing.T) {
 	assert := assert.New(t)
-	db, _ := LoadTempDB(assert)
+	db, _, err := LoadTempDB()
+	assert.Nil(err)
 	var commits testCommits
 	genesis := db.Head()
 	commits = append(commits, genesis)
@@ -40,7 +39,8 @@ func reloadDB(assert *assert.Assertions, dir string) (db *DB) {
 func TestGenesis(t *testing.T) {
 	assert := assert.New(t)
 
-	db, dir := LoadTempDB(assert)
+	db, dir, err := LoadTempDB()
+	assert.Nil(err)
 
 	tx := db.NewTransaction()
 	assert.False(tx.Has("foo"))
@@ -61,11 +61,12 @@ func TestGenesis(t *testing.T) {
 
 func TestData(t *testing.T) {
 	assert := assert.New(t)
-	db, dir := LoadTempDB(assert)
+	db, dir, err := LoadTempDB()
+	assert.Nil(err)
 
 	exp := []byte(`"bar"`)
 	tx := db.NewTransaction()
-	err := tx.Put("foo", exp)
+	err = tx.Put("foo", exp)
 	assert.NoError(err)
 	_, err = tx.Commit(log.Default())
 	assert.NoError(err)
@@ -96,29 +97,13 @@ func TestData(t *testing.T) {
 	}
 }
 
-func TestLoadBadSpec(t *testing.T) {
-	assert := assert.New(t)
-
-	sp, err := spec.ForDatabase("http://localhost:6666") // not running, presumably
-	assert.NoError(err)
-	db, err := Load(sp)
-	assert.Nil(db)
-	assert.Regexp(`Get "?http://localhost:6666/root/"?: dial tcp (.+?):6666: connect: connection refused`, err.Error())
-
-	srv := httptest.NewServer(http.NotFoundHandler())
-	sp, err = spec.ForDatabase(srv.URL)
-	assert.NoError(err)
-	db, err = Load(sp)
-	assert.Nil(db)
-	assert.EqualError(err, "Unexpected response: Not Found: 404 page not found")
-}
-
 func TestConflictingCommits(t *testing.T) {
 	assert := assert.New(t)
-	db, _ := LoadTempDB(assert)
+	db, _, err := LoadTempDB()
+	assert.Nil(err)
 
 	tx1 := db.NewTransaction()
-	err := tx1.Put("a", []byte("1"))
+	err = tx1.Put("a", []byte("1"))
 	assert.NoError(err)
 
 	tx2 := db.NewTransaction()

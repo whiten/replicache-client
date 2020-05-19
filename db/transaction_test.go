@@ -5,7 +5,7 @@ import (
 
 	"github.com/attic-labs/noms/go/marshal"
 	"github.com/attic-labs/noms/go/nomdl"
-	"github.com/attic-labs/noms/go/spec"
+	"github.com/attic-labs/noms/go/spec/lite"
 	"github.com/attic-labs/noms/go/types"
 	"github.com/attic-labs/noms/go/util/datetime"
 	"github.com/stretchr/testify/assert"
@@ -64,11 +64,12 @@ func TestDel(t *testing.T) {
 
 func TestReadTransaction(t *testing.T) {
 	assert := assert.New(t)
-	db, _ := LoadTempDB(assert)
+	db, _, err := LoadTempDB()
+	assert.Nil(err)
 
 	exp := []byte(`"bar"`)
 	wtx := db.NewTransaction()
-	err := wtx.Put("foo", exp)
+	err = wtx.Put("foo", exp)
 	assert.NoError(err)
 	_, err = wtx.Commit(log.Default())
 	assert.NoError(err)
@@ -96,11 +97,12 @@ func TestReadTransaction(t *testing.T) {
 
 func TestClosedTransaction(t *testing.T) {
 	assert := assert.New(t)
-	db, _ := LoadTempDB(assert)
+	db, _, err := LoadTempDB()
+	assert.Nil(err)
 
 	tx := db.NewTransaction()
 	assert.False(tx.Closed())
-	_, err := tx.Commit(log.Default())
+	_, err = tx.Commit(log.Default())
 	assert.NoError(err)
 	assert.True(tx.Closed())
 
@@ -122,12 +124,12 @@ func TestClosedTransaction(t *testing.T) {
 
 func TestWriteTransaction(t *testing.T) {
 	assert := assert.New(t)
-	db, _ := LoadTempDB(assert)
+	db, _, err := LoadTempDB()
 
 	exp := []byte(`"bar"`)
 	tx := db.NewTransaction()
 
-	err := tx.Put("foo", exp)
+	err = tx.Put("foo", exp)
 	assert.NoError(err)
 
 	ok, err := tx.Has("foo")
@@ -153,13 +155,14 @@ func TestWriteTransaction(t *testing.T) {
 
 func TestReadAndWriteTransaction(t *testing.T) {
 	assert := assert.New(t)
-	db, _ := LoadTempDB(assert)
+	db, _, err := LoadTempDB()
+	assert.Nil(err)
 
 	exp := []byte(`"bar"`)
 	rtx := db.NewTransaction()
 
 	wtx := db.NewTransaction()
-	err := wtx.Put("foo", exp)
+	err = wtx.Put("foo", exp)
 	assert.NoError(err)
 
 	has, err := wtx.Has("foo")
@@ -193,13 +196,14 @@ func TestReadAndWriteTransaction(t *testing.T) {
 
 func TestMultipleWriteTransaction(t *testing.T) {
 	assert := assert.New(t)
-	db, _ := LoadTempDB(assert)
+	db, _, err := LoadTempDB()
+	assert.Nil(err)
 
 	v1 := []byte(`"v1"`)
 	v2 := []byte(`"v2"`)
 
 	tx1 := db.NewTransaction()
-	err := tx1.Put("k", v1)
+	err = tx1.Put("k", v1)
 	assert.NoError(err)
 
 	tx2 := db.NewTransaction()
@@ -225,13 +229,14 @@ func TestMultipleWriteTransaction(t *testing.T) {
 
 func TestMultipleWriteTransactionClose(t *testing.T) {
 	assert := assert.New(t)
-	db, _ := LoadTempDB(assert)
+	db, _, err := LoadTempDB()
+	assert.Nil(err)
 
 	v1 := []byte(`"v1"`)
 	v2 := []byte(`"v2"`)
 
 	tx1 := db.NewTransaction()
-	err := tx1.Put("k", v1)
+	err = tx1.Put("k", v1)
 	assert.NoError(err)
 
 	tx2 := db.NewTransaction()
@@ -257,7 +262,8 @@ func TestMultipleWriteTransactionClose(t *testing.T) {
 
 func TestReplayWriteTransaction(t *testing.T) {
 	assert := assert.New(t)
-	db, _ := LoadTempDB(assert)
+	db, _, err := LoadTempDB()
+	assert.Nil(err)
 	d := datetime.Now()
 
 	master := testCommits{db.Head()}

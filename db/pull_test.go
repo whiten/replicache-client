@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"testing"
 
 	"github.com/attic-labs/noms/go/types"
@@ -18,7 +19,8 @@ import (
 func TestBaseSnapshot(t *testing.T) {
 	assert := assert.New(t)
 	d := datetime.Now()
-	db, _ := LoadTempDB(assert)
+	db, _, err := LoadTempDB()
+	assert.Nil(err)
 
 	var commits testCommits
 	commits.addGenesis(assert, db)
@@ -40,6 +42,9 @@ func TestBaseSnapshot(t *testing.T) {
 }
 
 func TestPull(t *testing.T) {
+	if runtime.GOOS == "js" {
+		t.Skip("httptest not supported under JS")
+	}
 	assert := assert.New(t)
 
 	tc := []struct {
@@ -283,7 +288,8 @@ func TestPull(t *testing.T) {
 	}
 
 	for _, t := range tc {
-		db, dir := LoadTempDB(assert)
+		db, dir, err := LoadTempDB()
+		assert.Nil(err)
 		fmt.Println("dir", dir)
 
 		ed := kv.NewMap(db.noms).Edit()
@@ -296,7 +302,7 @@ func TestPull(t *testing.T) {
 		}
 		m := ed.Build()
 		g := makeGenesis(db.noms, t.initialStateID, db.noms.WriteValue(m.NomsMap()), m.NomsChecksum(), 1 /*lastMutationID*/)
-		_, err := db.noms.SetHead(db.noms.GetDataset(MASTER_DATASET), db.noms.WriteValue(g.NomsStruct))
+		_, err = db.noms.SetHead(db.noms.GetDataset(MASTER_DATASET), db.noms.WriteValue(g.NomsStruct))
 		assert.NoError(err)
 		err = db.Reload()
 		assert.NoError(err, t.label)

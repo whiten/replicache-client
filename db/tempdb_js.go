@@ -1,19 +1,17 @@
-// +build !js,!wasm
+// +build js,wasm
 
 package db
 
 import (
-	"io/ioutil"
+	"github.com/lithammer/shortuuid"
 
-	"github.com/attic-labs/noms/go/spec"
+	"github.com/attic-labs/noms/go/spec/lite"
+
+	_ "roci.dev/replicache-client/idb"
 )
 
 func LoadTempDB() (r *DB, dir string, err error) {
-	dir, err = ioutil.TempDir("", "")
-	if err != nil {
-		return
-	}
-
+	dir = "idb:" + shortuuid.New()
 	sp, err := spec.ForDatabase(dir)
 	if err != nil {
 		return

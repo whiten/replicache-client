@@ -1,13 +1,20 @@
-package repm
+// +build !js,!wasm
+
+package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"path"
 	"testing"
 
+	zl "github.com/rs/zerolog"
+
+	"github.com/attic-labs/noms/go/spec/lite"
 	"github.com/stretchr/testify/assert"
 	diffserve "roci.dev/diff-server/serve"
 	servetypes "roci.dev/diff-server/serve/types"
@@ -172,7 +179,7 @@ func (t testEnv) teardown() {
 	for _, f := range t.teardowns {
 		f()
 	}
-	deinit()
+	Reset()
 }
 
 func newTestEnv(assert *assert.Assertions) testEnv {
@@ -180,7 +187,10 @@ func newTestEnv(assert *assert.Assertions) testEnv {
 
 	// Client
 	clientDir, err := ioutil.TempDir("", "")
-	Init(clientDir, "", nil)
+	Register(nil, func(name string, l zl.Logger) (spec.Spec, error) {
+		return spec.ForDatabase(path.Join(clientDir, base64.RawURLEncoding.EncodeToString([]byte(name))))
+	}, nil)
+
 	ret, err := Dispatch(env.dbName, "open", nil)
 	assert.Nil(ret)
 	assert.NoError(err)

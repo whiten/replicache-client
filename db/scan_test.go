@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/attic-labs/noms/go/spec"
+	"github.com/attic-labs/noms/go/spec/lite"
 	"github.com/stretchr/testify/assert"
 	"roci.dev/diff-server/util/log"
 )

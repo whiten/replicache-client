@@ -1,4 +1,4 @@
-package repm
+package api
 
 import (
 	"encoding/json"
@@ -14,15 +14,14 @@ import (
 )
 
 type connection struct {
-	dir                string
 	db                 *db.DB
 	transactions       map[int]*db.Transaction
 	transactionCounter int
 	transactionMutex   sync.RWMutex
 }
 
-func newConnection(d *db.DB, p string) *connection {
-	return &connection{db: d, dir: p, transactions: map[int]*db.Transaction{}, transactionCounter: 1}
+func newConnection(d *db.DB) *connection {
+	return &connection{db: d, transactions: map[int]*db.Transaction{}, transactionCounter: 1}
 }
 
 func (conn *connection) findTransaction(txID int) (*db.Transaction, error) {

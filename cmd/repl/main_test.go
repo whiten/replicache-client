@@ -1,3 +1,5 @@
+// +build !js,!wasm
+
 package main
 
 import (
@@ -245,10 +247,11 @@ func TestDrop(t *testing.T) {
 	}
 
 	for i, t := range tc {
-		d, dir := db.LoadTempDB(assert)
+		d, dir, err := db.LoadTempDB()
+		assert.Nil(err)
 
 		tx := d.NewTransaction()
-		err := tx.Put("foo", []byte(`"bar"`))
+		err = tx.Put("foo", []byte(`"bar"`))
 		assert.NoError(err)
 		_, err = tx.Commit(log.Default())
 		assert.NoError(err)
@@ -270,6 +273,7 @@ func TestDrop(t *testing.T) {
 		assert.Equal(dropWarning, out.String(), desc)
 		assert.Equal(t.errs, errs.String(), desc)
 		assert.Equal(0, code, desc)
+		fmt.Println("ForDatabase", dir)
 		sp, err := spec.ForDatabase(dir)
 		assert.NoError(err)
 		noms := sp.GetDatabase()
@@ -280,7 +284,8 @@ func TestDrop(t *testing.T) {
 
 func TestEmptyInput(t *testing.T) {
 	assert := assert.New(t)
-	db.LoadTempDB(assert)
+	_, _, err := db.LoadTempDB()
+	assert.Nil(err)
 	var args []string
 
 	// Just testing that they don't crash.

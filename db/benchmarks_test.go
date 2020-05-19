@@ -11,7 +11,8 @@ import (
 
 func BenchmarkPut(b *testing.B) {
 	assert := assert.New(b)
-	db, dir := LoadTempDB(assert)
+	db, dir, err := LoadTempDB()
+	assert.Nil(err)
 	fmt.Println(dir)
 	for n := 0; n < b.N; n++ {
 		tx := db.NewTransaction()

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"testing"
 
 	"github.com/attic-labs/noms/go/types"
@@ -12,8 +13,12 @@ import (
 )
 
 func Test_push(t *testing.T) {
+	if runtime.GOOS == "js" {
+		t.Skip("httptest not supported under JS")
+	}
 	assert := assert.New(t)
-	db, _ := LoadTempDB(assert)
+	db, _, err := LoadTempDB()
+	assert.Nil(err)
 
 	type args struct {
 		pending            []Local

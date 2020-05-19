@@ -1,3 +1,5 @@
+// +build !js,!wasm
+
 package repm
 
 import (
@@ -16,6 +18,8 @@ import (
 	"roci.dev/diff-server/util/log"
 	"roci.dev/diff-server/util/time"
 	"roci.dev/diff-server/util/version"
+
+	"roci.dev/replicache-client/api"
 )
 
 func mm(assert *assert.Assertions, in interface{}) []byte {
@@ -95,7 +99,7 @@ func TestBasic(t *testing.T) {
 		assert.NoError(err)
 	}
 
-	testFile, err := ioutil.TempFile(connections["db1"].dir, "")
+	testFile, err := ioutil.TempFile(dbPath(dir, "db1"), "")
 	assert.NoError(err)
 
 	{
@@ -121,8 +125,10 @@ func TestBasic(t *testing.T) {
 		assert.Equal(`{"ref":"0e31ieoihmure8b4j0m3ssij8of2qi54"}`, s(resp))
 		assert.NoError(err)
 
-		assert.Equal("put-something", connections["db1"].db.Head().Meta.Local.Name)
-		assert.Equal("[\n  \"foo\",\n  \"baz\",\n]", types.EncodedValue(connections["db1"].db.Head().Meta.Local.Args))
+		db := api.Get("db1")
+		assert.NotNil(db)
+		assert.Equal("put-something", db.Head().Meta.Local.Name)
+		assert.Equal("[\n  \"foo\",\n  \"baz\",\n]", types.EncodedValue(db.Head().Meta.Local.Args))
 	}
 
 	resp, err := Dispatch("db1", "close", nil)

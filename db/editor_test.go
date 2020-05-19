@@ -3,7 +3,7 @@ package db
 import (
 	"testing"
 
-	"github.com/attic-labs/noms/go/spec"
+	"github.com/attic-labs/noms/go/spec/lite"
 	"github.com/attic-labs/noms/go/types"
 	"github.com/stretchr/testify/assert"
 )

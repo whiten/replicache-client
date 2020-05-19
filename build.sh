@@ -18,7 +18,7 @@ export GO111MODULE=off
 
 mkdir -p roci.dev
 rm roci.dev/replicache-client
-ln -s $ROOT roci.dev/replicache-client > /dev/null 2>&1 
+ln -s $ROOT roci.dev/replicache-client > /dev/null 2>&1
 cd roci.dev/replicache-client
 rm -rf build
 mkdir build
