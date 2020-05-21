@@ -9,7 +9,7 @@ import (
 
 	zl "github.com/rs/zerolog"
 
-	"github.com/attic-labs/noms/go/spec/lite"
+	spec "github.com/attic-labs/noms/go/spec/lite"
 
 	"roci.dev/replicache-client/api"
 	_ "roci.dev/replicache-client/idb"
@@ -67,6 +67,8 @@ func dispatch(this js.Value, inputs []js.Value) interface{} {
 
 func main() {
 	c := make(chan bool)
-	js.Global().Get("replicache").Set("dispatch", js.FuncOf(dispatch))
+	js.Global().Set("replicache", map[string]js.Func{
+		"dispatch": js.FuncOf(dispatch),
+	})
 	<-c
 }

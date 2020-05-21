@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/attic-labs/noms/go/spec/lite"
+	spec "github.com/attic-labs/noms/go/spec/lite"
 
 	"roci.dev/replicache-client/db"
 )
