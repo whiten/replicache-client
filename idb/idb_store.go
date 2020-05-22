@@ -136,12 +136,6 @@ func (s *IndexedDBStore) Commit(current, last hash.Hash) bool {
 		return false
 	}
 
-	// NOCOMMIT get here.
-	/*
-		v2, err := s.idb.Get([]byte(rootKey))
-		fmt.Println("Transaction get", len(v2), string(v2), err)
-	*/
-
 	v, err := t.Get([]byte(rootKey))
 	if err != nil {
 		fmt.Println("Transaction get failed")
@@ -155,21 +149,34 @@ func (s *IndexedDBStore) Commit(current, last hash.Hash) bool {
 		}
 	}
 
-	buf := bytes.Buffer{}
+	ch := make(chan error)
 	for key, c := range s.pending {
+		buf := bytes.Buffer{}
 		buf.Reset()
 		chunks.Serialize(c, &buf)
-		if err = t.Put([]byte(key.String()), buf.Bytes()); err != nil {
-			fmt.Println("Put chunk failed")
+		go func(key string) {
+			ch <- t.Put([]byte(key), buf.Bytes())
+		}(key.String())
+	}
+
+	go func() {
+		ch <- t.Put([]byte(rootKey), []byte(current.String()))
+	}()
+
+	for i := 0; i < len(s.pending)+1; i++ {
+		if err = <-ch; err != nil {
+			fmt.Println("Put failed", err)
 			return false
 		}
 	}
-
-	if err = t.Put([]byte(rootKey), []byte(current.String())); err != nil {
-		fmt.Println("Put root failed")
+	err = t.Commit()
+	if err != nil {
+		fmt.Println("Commit failed!", err)
 		return false
 	}
 	s.root = current
+
+	s.pending = make(map[hash.Hash]chunks.Chunk)
 	return true
 }
 
@@ -190,13 +197,6 @@ type indexedDBProtocol struct{}
 
 func (p indexedDBProtocol) NewChunkStore(sp spec.Spec) (chunks.ChunkStore, error) {
 	return NewIndexedDBStore(sp.DatabaseName)
-	/*
-		db, err := NewIndexedDB(sp.DatabaseName)
-		if err != nil {
-			return nil, err
-		}
-		return &IndexedDBStore{db, make(map[hash.Hash]chunks.Chunk), hash.Hash{}}, nil
-	*/
 }
 
 func (p indexedDBProtocol) NewDatabase(sp spec.Spec) (datas.Database, error) {

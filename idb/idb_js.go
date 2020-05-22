@@ -113,7 +113,8 @@ type transaction struct {
 }
 
 func (i *indexedDB) OpenTransaction() (Transaction, error) {
-	tx := i.db.Call("transaction", objectStore, "readwrite")
+	tx := i.db.Call("transaction", objectStore, "readwrite",
+		map[string]interface{}{"durability": "relaxed"})
 	return &transaction{i.db, tx, tx.Get("store")}, nil
 }
 
@@ -144,6 +145,7 @@ func (t *transaction) Put(key, value []byte) error {
 }
 
 func (t *transaction) Commit() error {
+	t.tx.Call("commit")
 	_, err := await(t.tx.Get("done"))
 	return err
 }
